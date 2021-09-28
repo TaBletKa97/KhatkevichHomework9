@@ -1,24 +1,26 @@
-import java.awt.*;
+import java.io.FileOutputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
 
-public class Core {
-    private static Scanner scanner = new Scanner(System.in);
-    private static List<Player> players = new ArrayList<>();
-    private static List<Game> games = new ArrayList<>();
+public class Core implements Serializable {
+    private List<Player> players = new ArrayList<>();
+    private List<Game> games = new ArrayList<>();
     private final static int STANDART_MMR = 3000;
 
-    public static List<Player> getPlayers() {
+    public List<Player> getPlayers() {
         return players;
     }
 
-    public static List<Game> getGames() {
+    public List<Game> getGames() {
         return games;
     }
 
-    public static void createPlayer() {
+    private void createPlayer() {
+        Scanner scanner = new Scanner(System.in);
         String nick = "";
         try {
             System.out.println("Введите никнейм");
@@ -27,7 +29,7 @@ public class Core {
             System.out.println("Некорректный никнейм.");
             createPlayer();
         }
-        if (players.contains(nick)) {
+        if (playersContainsNick(nick)) {
             System.out.println("Данный ник уже занят");
             createPlayer();
             return;
@@ -40,52 +42,43 @@ public class Core {
         System.out.printf("%d. %s\n", games.size() + 1, "Закончить выбор");
         int gameIndex = 0;
         do {
-            gameIndex = chooseGame();
-            if (gameIndex < 0 || gameIndex > games.size()+1) {
+            gameIndex = correctInt()-1;
+            if (gameIndex < 0 || gameIndex > games.size()) {
                 System.out.println("Некорректный выбор. Попробуйте еще раз");
-                gameIndex = chooseGame();
-            } else if (gameIndex == games.size()+1 && players.get(players.size() - 1).getGameRating().isEmpty()) {
+                gameIndex = correctInt() -1;
+            } else if (gameIndex == games.size() && players.get(players.size() - 1).getGameRating().isEmpty()) {
                 System.out.println("Выберите как минимум одну игру");
                 gameIndex = -1;
-            } else if (gameIndex > 0 && gameIndex < games.size()) {
-                if (!players.get(players.size() - 1).getGameRating().containsKey(games.get(gameIndex - 1))) {
-                    players.get(players.size() - 1).getGameRating().put(games.get(gameIndex - 1), STANDART_MMR);
-                    games.get(gameIndex -1).getRating().put(STANDART_MMR, players.get(players.size()-1));
+            } else if (gameIndex < games.size()) {
+                if (!players.get(players.size() - 1).getGameRating().containsKey(games.get(gameIndex))) {
+                    players.get(players.size() - 1).getGameRating().put(games.get(gameIndex), STANDART_MMR);
+                    games.get(gameIndex).getRating().put(players.get(players.size()-1), STANDART_MMR);
                 } else {
                     System.out.println("Эта игра уже закреплена за вашим аккаунтом");
                 }
             }
-        } while (gameIndex != games.size() + 1);
+        } while (gameIndex != games.size());
     }
 
-    public static void showGames() {
+    private void showGames() {
         for (int i = 0; i < games.size(); i++) {
             System.out.printf("%d. %s\n", i + 1, games.get(i).getName());
         }
     }
 
-    private static int chooseGame() {
-        try {
-            int game = scanner.nextInt();
-            return game;
-        } catch (Exception e) {
-            System.out.println("Некорректный выбор. Попробуйте еще раз.");
-            return chooseGame();
-        }
-    }
-
-    public static void showPlayerStats() {
+    private void showPlayerStats() {
         System.out.println("Введите ник игрока:");
         String nick = correctString();
         for (int i = 0; i < players.size(); i++) {
-            if(players.get(i).getNickname().equalsIgnoreCase(nick));
-            System.out.println(players.get(i).toString());
-            return;
+            if(players.get(i).getNickname().equalsIgnoreCase(nick)) {
+                System.out.println(players.get(i).toString());
+                return;
+            }
         }
         System.out.println("Игрока с данным никнеймом не найдено");
     }
 
-    private static String correctString() {
+    private String correctString() {
         try {
             Scanner scanner = new Scanner(System.in);
             return scanner.nextLine();
@@ -96,10 +89,12 @@ public class Core {
         }
     }
 
-    private static int correctInt() {
+    private int correctInt() {
         try {
             Scanner scanner = new Scanner(System.in);
-            return scanner.nextInt();
+            int i = scanner.nextInt();
+            scanner.nextLine();
+            return i;
         } catch (Exception ex) {
             ex.printStackTrace();
             System.out.println("Ошибка ввода, попробуйте еще раз");
@@ -119,16 +114,125 @@ public class Core {
         return player;
     }
 
+    private Game searchGame() {
+        System.out.println("Выберите игру:");
+        showGames();
+        int chsgame = correctInt();
+        if (chsgame < 1 || chsgame > games.size()) {
+            System.out.println("Неверное значение");
+            return searchGame();
+        }
+        chsgame -= 1;
+        return games.get(chsgame);
+    }
+
     private void playGame() {
+        Player player = searchPlayer();
+        Game game = searchGame();
+        System.out.println("Введите количество игр, кторые хотите сыграть");
+        Integer count = correctInt();
+        Random random = new Random();
+        for (int i = 0; i < count; i++) {
+            if (random.nextBoolean()) {
+                Object mmr = player.getGameRating().get(game);
+                if (mmr == null) {
+                    System.out.println("Игрок не играет в данную игру");
+                    return;
+                }
+                int newMMR = (int) mmr;
+                newMMR += 25 + random.nextInt(10);
+                player.getGameRating().put(game, newMMR);
+                game.getRating().put(player, newMMR);
+            } else {
+                Object mmr = player.getGameRating().get(game);
+                if (mmr == null) {
+                    System.out.println("Игрок не играет в данную игру");
+                    return;
+                }
+                int newMMR = (int) mmr;
+                newMMR -= 25 + random.nextInt(10);
+                player.getGameRating().put(game, newMMR);
+                game.getRating().put(player, newMMR);
+            }
+        }
+    }
+
+    private boolean playersContainsNick(String nick) {
+        boolean result = false;
+        for (int i = 0; i < players.size(); i++) {
+            if (players.get(i).getNickname().equalsIgnoreCase(nick)) {
+                result = true;
+            }
+        }
+        return result;
+    }
+
+    private static void top10byGame() {
 
     }
 
-    private void playGame(Player player, Game game) {
-        Random random = new Random();
-        if (random.nextBoolean()) {
+    public void go() {
+        int n = -1;
+        do {
+            showMenu();
+            n = choose(7);
+            switch (n) {
+                case 1:
+                    createPlayer();
+                    break;
+                case 2:
+                    showGames();
+                    break;
+                case 3:
+                    playGame();
+                    break;
+                case 4:
+                    top10byGame();
+                    break;
+                case 5:
+                    System.out.println("Данная функция пока еще в разработке");
+                    break;
+                case 6:
+                    showPlayerStats();
+                    break;
+                case 7:
+                    save();
+                    break;
+            }
+        } while (n != 7);
+    }
 
-        } else {
+    private int choose(int n) {
+        Scanner scanner = new Scanner(System.in);
+        int choice = 0;
+        try {
+            choice = scanner.nextInt();
+            if (choice < 1 || choice > n) {
+                throw new Exception();
+            }
+        } catch (Exception ex) {
+            System.out.println("Некорректный выбор. Попробуйте снова");
+            choice = choose(n);
+        }
+        return choice;
+    }
 
+    private void showMenu() {
+        System.out.println("1. Добавить игрока");
+        System.out.println("2. Отобразить список игр");
+        System.out.println("3. Сыграть в игру");
+        System.out.println("4. Вывести топ 10 по игре");
+        System.out.println("5. Вывести топ 10 по всем играм");
+        System.out.println("6. Вывести рейтинг игрока");
+        System.out.println("7. Сохранить и выйти");
+    }
+
+    private void save() {
+        try {
+            ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream("sevedMMR.txt"));
+            objectOutputStream.writeObject(this);
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
     }
 }

@@ -1,8 +1,10 @@
-import java.util.TreeMap;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
-public class Game {
+public class Game implements Serializable {
     private String name;
-    private TreeMap<Integer, Player> rating = new TreeMap<>();
+    private Map<Player, Integer> rating = new HashMap<>();
 
     public Game(String name) {
         this.name = name;
@@ -16,11 +18,11 @@ public class Game {
         this.name = name;
     }
 
-    public TreeMap<Integer, Player> getRating() {
+    public Map<Player, Integer> getRating() {
         return rating;
     }
 
-    public void setRating(TreeMap<Integer, Player> rating) {
+    public void setRating(HashMap<Player, Integer> rating) {
         this.rating = rating;
     }
 }

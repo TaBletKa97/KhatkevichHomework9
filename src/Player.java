@@ -1,9 +1,29 @@
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Player {
+public class Player implements Serializable {
     private String nickname;
     private Map<Game, Integer> gameRating = new HashMap<>();
+
+//    public Player() {
+//    }
+//
+//    /*
+//    *Этот конструктор чисто для ручного добавления в прогу людей
+//    *чтобы не добавлять каждый раз при запуске
+//     */
+//
+//    public Player(String nickname, Game game1, Game game2) {
+//        this.nickname = nickname;
+//        this.gameRating.put(game1, 5600);
+//        this.gameRating.put(game2, 2500);
+//    }
+
+    public Player(String nickname, Game game1) {
+        this.nickname = nickname;
+        this.gameRating.put(game1, 4000);
+    }
 
     public Player(String nickname) {
         this.nickname = nickname;

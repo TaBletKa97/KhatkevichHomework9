@@ -1,10 +1,21 @@
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
+
 public class Prog {
     public static void main(String[] args) {
-        Core.getGames().add(new Game("Dota 2"));
-        Core.getGames().add(new Game("CS:GO"));
-        Core.getGames().add(new Game("PUBG"));
-        Core.getGames().add(new Game("LoL"));
-        Core.createPlayer();
-        Core.showPlayerStats();
+        Core core = null;
+        try {
+            ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream("sevedMMR.txt"));
+            core = (Core) objectInputStream.readObject();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            core = new Core();
+        }
+        System.out.println(core.getPlayers().stream(). );
+        core.getGames().add(new Game("Dota 2"));
+        core.getGames().add(new Game("CS:GO"));
+        core.getGames().add(new Game("PUBG"));
+        core.getGames().add(new Game("LoL"));
+        core.go();
     }
 }
