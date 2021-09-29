@@ -1,10 +1,8 @@
 import java.io.FileOutputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class Core implements Serializable {
     private List<Player> players = new ArrayList<>();
@@ -159,16 +157,43 @@ public class Core implements Serializable {
 
     private boolean playersContainsNick(String nick) {
         boolean result = false;
-        for (int i = 0; i < players.size(); i++) {
-            if (players.get(i).getNickname().equalsIgnoreCase(nick)) {
+        for (Player player : players) {
+            if (player.getNickname().equalsIgnoreCase(nick)) {
                 result = true;
+                break;
             }
         }
         return result;
     }
 
-    private static void top10byGame() {
+    private void topByGame() {
+        Game game = searchGame();
+        HashMap<Player, Integer> map = sortingMap(game.getRating());
+        int i = 1;
+        for (Map.Entry<Player, Integer> entry: map.entrySet()) {
+            System.out.printf("%d. %s - %d\n", i, entry.getKey().getNickname(), entry.getValue());
+            i++;
+        }
+        System.out.println("");
+    }
 
+    private void topOfAllPlayers() {
+        HashMap<String, Integer> globalRating = new HashMap<>();
+        for (Player player: players) {
+            HashMap<Game, Integer> games = (HashMap<Game, Integer>) player.getGameRating();
+            for (Map.Entry<Game, Integer> entry: games.entrySet()) {
+                Integer mmr = entry.getValue();
+                String gameAndName = entry.getKey().getName() + " " + player.getNickname();
+                globalRating.put(gameAndName, mmr);
+            }
+        }
+        HashMap<String, Integer> sortedGlobalRating = sortingMap(globalRating);
+        int i = 1;
+        for (Map.Entry<String, Integer> entry: sortedGlobalRating.entrySet()) {
+            System.out.printf("%d. %s - %d\n", i, entry.getKey(), entry.getValue());
+            i++;
+        }
+        System.out.println("");
     }
 
     public void go() {
@@ -187,10 +212,10 @@ public class Core implements Serializable {
                     playGame();
                     break;
                 case 4:
-                    top10byGame();
+                    topByGame();
                     break;
                 case 5:
-                    System.out.println("Данная функция пока еще в разработке");
+                    topOfAllPlayers();
                     break;
                 case 6:
                     showPlayerStats();
@@ -221,8 +246,8 @@ public class Core implements Serializable {
         System.out.println("1. Добавить игрока");
         System.out.println("2. Отобразить список игр");
         System.out.println("3. Сыграть в игру");
-        System.out.println("4. Вывести топ 10 по игре");
-        System.out.println("5. Вывести топ 10 по всем играм");
+        System.out.println("4. Вывести топ по игре");
+        System.out.println("5. Вывести топ по всем играм");
         System.out.println("6. Вывести рейтинг игрока");
         System.out.println("7. Сохранить и выйти");
     }
@@ -234,5 +259,11 @@ public class Core implements Serializable {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+    }
+
+    private <K> HashMap<K, Integer> sortingMap(Map<K, Integer> map) {
+        return map.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
     }
 }

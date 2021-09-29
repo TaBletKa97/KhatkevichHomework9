@@ -11,11 +11,11 @@ public class Prog {
             ex.printStackTrace();
             core = new Core();
         }
-        System.out.println(core.getPlayers().stream(). );
-        core.getGames().add(new Game("Dota 2"));
-        core.getGames().add(new Game("CS:GO"));
-        core.getGames().add(new Game("PUBG"));
-        core.getGames().add(new Game("LoL"));
+        core.getPlayers().stream().forEach(System.out::println);
+//        core.getGames().add(new Game("Dota 2"));
+//        core.getGames().add(new Game("CS:GO"));
+//        core.getGames().add(new Game("PUBG"));
+//        core.getGames().add(new Game("LoL"));
         core.go();
     }
 }
